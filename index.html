@@ -37,57 +37,45 @@
     }
     button{
       padding:14px 30px; font-size:16px; border:none; border-radius:999px;
-      cursor:pointer; min-width:140px;
+      cursor:pointer; min-width:140px; transition:transform .2s ease;
     }
     #continueBtn{ background:#38bdf8; color:#000; }
     #yesBtn{ background:#22c55e; color:#000; }
     #noBtn{ background:#ef4444; color:#000; position:relative; touch-action:none; }
     .btn-wrap{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
 
-    .confetti{ position:fixed; top:-10px; width:10px; height:10px; animation:fall 3s linear forwards; }
-    @keyframes fall{ to{ transform:translateY(110vh) rotate(720deg); opacity:0; } }
-
-    /* Admin button */
-    .admin-btn{
-      margin-top:18px; font-size:12px; background:#374151; color:#fff;
+    /* Admin access (hidden corner) */
+    .admin-link{
+      position:fixed;
+      bottom:8px;
+      right:10px;
+      font-size:11px;
+      opacity:0.35;
+      cursor:pointer;
+      z-index:5;
     }
   </style>
 </head>
 <body>
   <div class="card" id="card"></div>
+  <div class="admin-link" id="adminLink">admin</div>
 
   <script>
     const card = document.getElementById('card');
+    const adminLink = document.getElementById('adminLink');
 
-    // Load saved names
-    const views = JSON.parse(localStorage.getItem('views') || '[]');
-
-    // Step 1: Ask name
+    // STEP 1: Ask name
     card.innerHTML = `
       <h1>Enter your name 💖</h1>
       <p>Just between us 😉</p>
       <input id="nameInput" placeholder="Your name here" />
       <button id="continueBtn">Continue ➜</button>
-      <button class="admin-btn" id="adminBtn">Admin</button>
     `;
 
     document.getElementById('continueBtn').onclick = () => {
       const name = document.getElementById('nameInput').value.trim();
       if(!name) return alert('Please enter your name 💕');
-
-      // Save view locally
-      views.push({ name, time: new Date().toLocaleString() });
-      localStorage.setItem('views', JSON.stringify(views));
-
       showProposal(name);
-    };
-
-    document.getElementById('adminBtn').onclick = () => {
-      const pass = prompt('Enter admin code');
-      if(pass !== '1234') return alert('Wrong code');
-
-      let list = views.map(v => `• ${v.name} (${v.time})`).join('<br>');
-      card.innerHTML = `<h1>👀 Viewed By</h1><p>${list || 'No views yet'}</p>`;
     };
 
     function showProposal(name){
@@ -103,35 +91,45 @@
       const yesBtn = document.getElementById('yesBtn');
       const noBtn = document.getElementById('noBtn');
 
+      // 1️⃣ No button escapes
       function moveButton(){
-        const r = 140;
+        const r = 120;
         noBtn.style.transform = `translate(${Math.random()*r*2-r}px,${Math.random()*r*2-r}px)`;
       }
       noBtn.addEventListener('mouseenter', moveButton);
-      noBtn.addEventListener('touchstart', moveButton);
+      noBtn.addEventListener('touchstart', () => {
+        moveButton();
+        // Zoom YES when NO is touched 😈
+        yesBtn.style.transform = 'scale(1.25)';
+        setTimeout(()=> yesBtn.style.transform='scale(1)', 300);
+      });
+
+      // 3️⃣ Auto-switch No → Yes
+      noBtn.addEventListener('click', () => {
+        noBtn.innerText = 'Yes ❤️';
+        noBtn.style.background = '#22c55e';
+        noBtn.onclick = () => yesBtn.click();
+      });
 
       yesBtn.onclick = () => {
-        confetti();
-
-        // WhatsApp auto message
-        const msg = encodeURIComponent(`I said YES ❤️🥹`);
-        window.open(`https://wa.me/?text=${msg}`, '_blank');
-
-        card.innerHTML = `<h1>YES!!! 💖🎉</h1><p>${name}, screenshot this moment 📸</p>`;
+        card.innerHTML = `
+          <h1>YES!!! 💖🎉</h1>
+          <p>${name}, this moment is officially legendary 😍<br>Screenshot this 📸</p>
+        `;
       };
     }
 
-    function confetti(){
-      for(let i=0;i<70;i++){
-        const c=document.createElement('div');
-        c.className='confetti';
-        c.style.left=Math.random()*100+'vw';
-        c.style.background=`hsl(${Math.random()*360},100%,50%)`;
-        c.style.animationDuration=(2+Math.random()*2)+'s';
-        document.body.appendChild(c);
-        setTimeout(()=>c.remove(),4000);
-      }
-    }
+    // 🔐 Admin view (position changed + new password)
+    adminLink.onclick = () => {
+      const pass = prompt('Admin password');
+      if(pass !== 'love@2026') return alert('Access denied');
+
+      card.innerHTML = `
+        <h1>👀 Admin Panel</h1>
+        <p>This device opened the proposal page.</p>
+        <p style="font-size:13px;opacity:.7">(Local access only)</p>
+      `;
+    };
   </script>
 </body>
 </html>
