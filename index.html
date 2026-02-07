@@ -29,94 +29,109 @@
       position:relative;
       z-index:2;
     }
-    h1{
-      margin-bottom:16px;
-      font-size:22px;
-      line-height:1.35;
-    }
-    p{
-      font-size:15px;
-      opacity:0.9;
-      margin-bottom:22px;
-    }
-    .btn-wrap{
-      display:flex;
-      gap:14px;
-      justify-content:center;
-      flex-wrap:wrap;
+    h1{ font-size:22px; margin-bottom:16px; }
+    p{ font-size:15px; opacity:0.9; margin-bottom:22px; }
+    input{
+      width:100%; padding:14px; border-radius:12px; border:none;
+      font-size:16px; margin-bottom:18px;
     }
     button{
-      padding:14px 30px;
-      font-size:16px;
-      border:none;
-      border-radius:999px;
-      cursor:pointer;
-      transition:transform 0.15s ease, background 0.2s ease;
-      min-width:120px;
+      padding:14px 30px; font-size:16px; border:none; border-radius:999px;
+      cursor:pointer; min-width:140px;
     }
+    #continueBtn{ background:#38bdf8; color:#000; }
     #yesBtn{ background:#22c55e; color:#000; }
     #noBtn{ background:#ef4444; color:#000; position:relative; touch-action:none; }
+    .btn-wrap{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
 
-    /* Confetti */
-    .confetti{
-      position:fixed;
-      top:-10px;
-      width:10px;
-      height:10px;
-      background:red;
-      animation:fall 3s linear forwards;
-      z-index:1;
-    }
-    @keyframes fall{
-      to{ transform:translateY(110vh) rotate(720deg); opacity:0; }
+    .confetti{ position:fixed; top:-10px; width:10px; height:10px; animation:fall 3s linear forwards; }
+    @keyframes fall{ to{ transform:translateY(110vh) rotate(720deg); opacity:0; } }
+
+    /* Admin button */
+    .admin-btn{
+      margin-top:18px; font-size:12px; background:#374151; color:#fff;
     }
   </style>
 </head>
 <body>
-  <div class="card" id="card">
-    <h1>Will you be mine forever? 💍🥺</h1>
-    <p>I promise unlimited love, care & snacks 🍫</p>
-    <div class="btn-wrap">
-      <button id="yesBtn">Yes ❤️</button>
-      <button id="noBtn">No 🙈</button>
-    </div>
-  </div>
+  <div class="card" id="card"></div>
 
   <script>
-    const noBtn = document.getElementById('noBtn');
-    const yesBtn = document.getElementById('yesBtn');
     const card = document.getElementById('card');
 
-    // Feature 1️⃣: No button escapes
-    function moveButton(){
-      const range = 140;
-      const x = Math.random() * range * 2 - range;
-      const y = Math.random() * range * 2 - range;
-      noBtn.style.transform = `translate(${x}px, ${y}px)`;
-    }
-    noBtn.addEventListener('mouseenter', moveButton);
-    noBtn.addEventListener('touchstart', moveButton);
+    // Load saved names
+    const views = JSON.parse(localStorage.getItem('views') || '[]');
 
-    // Feature 4️⃣: Confetti explosion
-    function confettiBlast(){
-      for(let i=0;i<80;i++){
-        const c = document.createElement('div');
-        c.className = 'confetti';
-        c.style.left = Math.random()*100 + 'vw';
-        c.style.background = `hsl(${Math.random()*360},100%,50%)`;
-        c.style.animationDuration = (2 + Math.random()*2) + 's';
+    // Step 1: Ask name
+    card.innerHTML = `
+      <h1>Enter your name 💖</h1>
+      <p>Just between us 😉</p>
+      <input id="nameInput" placeholder="Your name here" />
+      <button id="continueBtn">Continue ➜</button>
+      <button class="admin-btn" id="adminBtn">Admin</button>
+    `;
+
+    document.getElementById('continueBtn').onclick = () => {
+      const name = document.getElementById('nameInput').value.trim();
+      if(!name) return alert('Please enter your name 💕');
+
+      // Save view locally
+      views.push({ name, time: new Date().toLocaleString() });
+      localStorage.setItem('views', JSON.stringify(views));
+
+      showProposal(name);
+    };
+
+    document.getElementById('adminBtn').onclick = () => {
+      const pass = prompt('Enter admin code');
+      if(pass !== '1234') return alert('Wrong code');
+
+      let list = views.map(v => `• ${v.name} (${v.time})`).join('<br>');
+      card.innerHTML = `<h1>👀 Viewed By</h1><p>${list || 'No views yet'}</p>`;
+    };
+
+    function showProposal(name){
+      card.innerHTML = `
+        <h1>${name}, will you be mine forever? 💍🥺</h1>
+        <p>I promise unlimited love, care & snacks 🍫</p>
+        <div class="btn-wrap">
+          <button id="yesBtn">Yes ❤️</button>
+          <button id="noBtn">No 🙈</button>
+        </div>
+      `;
+
+      const yesBtn = document.getElementById('yesBtn');
+      const noBtn = document.getElementById('noBtn');
+
+      function moveButton(){
+        const r = 140;
+        noBtn.style.transform = `translate(${Math.random()*r*2-r}px,${Math.random()*r*2-r}px)`;
+      }
+      noBtn.addEventListener('mouseenter', moveButton);
+      noBtn.addEventListener('touchstart', moveButton);
+
+      yesBtn.onclick = () => {
+        confetti();
+
+        // WhatsApp auto message
+        const msg = encodeURIComponent(`I said YES ❤️🥹`);
+        window.open(`https://wa.me/?text=${msg}`, '_blank');
+
+        card.innerHTML = `<h1>YES!!! 💖🎉</h1><p>${name}, screenshot this moment 📸</p>`;
+      };
+    }
+
+    function confetti(){
+      for(let i=0;i<70;i++){
+        const c=document.createElement('div');
+        c.className='confetti';
+        c.style.left=Math.random()*100+'vw';
+        c.style.background=`hsl(${Math.random()*360},100%,50%)`;
+        c.style.animationDuration=(2+Math.random()*2)+'s';
         document.body.appendChild(c);
         setTimeout(()=>c.remove(),4000);
       }
     }
-
-    yesBtn.addEventListener('click', () => {
-      confettiBlast();
-      card.innerHTML = `
-        <h1>She said YES!!! 💖🎉</h1>
-        <p>This moment is officially legendary 😍<br>Take a screenshot 📸</p>
-      `;
-    });
   </script>
 </body>
 </html>
